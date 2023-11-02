@@ -22,7 +22,7 @@ contract ETHDaddy is ERC721 {
     }
 
     constructor(string memory _name, string memory _symbol)
-        ERC721(_name, _symbol)
+    ERC721(_name, _symbol) 
     {
         owner = msg.sender;
     }
@@ -33,19 +33,20 @@ contract ETHDaddy is ERC721 {
     }
 
     function mint(uint256 _id) public payable {
-        require(_id != 0);
+        require(_id != 0 );
         require(_id <= maxSupply);
         require(domains[_id].isOwned == false);
         require(msg.value >= domains[_id].cost);
 
         domains[_id].isOwned = true;
         totalSupply++;
+        
 
-        _safeMint(msg.sender, _id);
+        _safeMint(msg.sender, _id);     
     }
 
     function getDomain(uint256 _id) public view returns (Domain memory) {
-        return domains[_id];
+            return domains[_id];
     }
 
     function getBalance() public view returns (uint256) {
@@ -56,4 +57,22 @@ contract ETHDaddy is ERC721 {
         (bool success, ) = owner.call{value: address(this).balance}("");
         require(success);
     }
+
+
+
+
+
+        // model a domain ...
+        // save the domain
+        // update total domain count
+
+    
 }
+
+    
+        
+    
+    
+
+    
+    
