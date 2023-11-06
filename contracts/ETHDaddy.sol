@@ -57,16 +57,6 @@ contract ETHDaddy is ERC721 {
         (bool success, ) = owner.call{value: address(this).balance}("");
         require(success);
     }
-
-
-
-
-
-        // model a domain ...
-        // save the domain
-        // update total domain count
-
-    
 }
 
     

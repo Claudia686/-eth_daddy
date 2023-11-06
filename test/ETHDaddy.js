@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1
+  let deployer, owner1, hacker
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1] = await ethers.getSigners();
+    [deployer, owner1, hacker] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -88,33 +88,40 @@ describe("ETHDaddy", () => {
   })
 
   describe("Withdraw", () => {
-    const ID = 1
-    const AMOUNT = ethers.utils.parseUnits("10", "ether")
-    let balanceBefore
+    describe("Success", () => {
+      const ID = 1
+      const AMOUNT = ethers.utils.parseUnits("10", "ether")
+      let balanceBefore
 
-    beforeEach(async () => {
-      //get balancebefore
-      balanceBefore = await ethers.provider.getBalance(deployer.address)
+      beforeEach(async () => {
+        //get balancebefore
+        balanceBefore = await ethers.provider.getBalance(deployer.address)
 
-      let transaction = await ethDaddy.connect(owner1).mint(ID, {
-        value: AMOUNT
+        let transaction = await ethDaddy.connect(owner1).mint(ID, {
+          value: AMOUNT
+        })
+        await transaction.wait()
+
+        transaction = await ethDaddy.connect(deployer).withdraw()
+        await transaction.wait()
       })
-      await transaction.wait()
 
-      transaction = await ethDaddy.connect(deployer).withdraw()
-      await transaction.wait()
+      it("Updates the owner balance", async () => {
+        const balanceAfter = await ethers.provider.getBalance(deployer.address)
+        expect(balanceAfter).to.be.greaterThan(balanceBefore)
+      })
+
+      it("Updates contract balance", async () => {
+        const result = await ethDaddy.getBalance()
+        expect(result).to.equal(0)
+      })
     })
+    describe("Failure", () => {
+      it("Revert non-user from withdrawing", async () => {
+        await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
 
-    it("Updates the owner balance", async () => {
-      const balanceAfter = await ethers.provider.getBalance(deployer.address)
-      expect(balanceAfter).to.be.greaterThan(balanceBefore)
+      })
     })
-
-    it("Updates contract balance", async () => {
-      const result = await ethDaddy.getBalance()
-      expect(result).to.equal(0)
-    })
-
   })
 
 })
