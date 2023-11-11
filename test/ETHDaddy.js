@@ -8,18 +8,17 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker
+  let deployer, owner1, hacker, buyer
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
 
-    // list a domain
     const transaction = await ethDaddy.connect(deployer).list("jack.eth", tokens(10))
     await transaction.wait()
   })
@@ -52,38 +51,62 @@ describe("ETHDaddy", () => {
   })
 
   describe("Domain", () => {
-    it("Resturns domain attributes", async () => {
-      let domain = await ethDaddy.getDomain(1);
-      expect(domain.name).to.equal("jack.eth")
-      expect(domain.cost).to.equal(tokens(10))
-      expect(domain.isOwned).to.equal(false)
+    describe("Success", () => {
+      it("Resturns domain attributes", async () => {
+        let domain = await ethDaddy.getDomain(1);
+        expect(domain.name).to.equal("jack.eth")
+        expect(domain.cost).to.equal(tokens(10))
+        expect(domain.isOwned).to.equal(false)
+      })
+    })
+    describe("Failure", () => {
+      it("Reverts non-owner from listing", async () => {
+        await expect(ethDaddy.connect(hacker).list("", ethers.utils.parseEther("1"))).to.be.reverted
+      })
+
+      it("Reverts creating a domain with empty name", async () => {
+        const emptyName = ""
+        await expect(ethDaddy.connect(buyer).list(emptyName, ethers.utils.parseEther("1"))).to.be.reverted
+      })
+
+      it("Reverts listing a domain with cost 0", async () => {
+        const domainCost = 10
+        await expect(ethDaddy.connect(owner1).list("jack.eth", ethers.utils.parseEther("0"))).to.be.reverted
+      })
+
+      it("Reverts listing a domain with dublicate id", async () => {
+        const existingDomainId = 1
+        await expect(ethDaddy.connect(owner1).list("jack.eth", ethers.utils.parseEther("1"))).to.be.reverted
+      })
     })
   })
 
   describe("Minting", () => {
-    const ID = 1
-    const AMOUNT = ethers.utils.parseUnits("10", "ether")
+    describe("Success", () => {
+      const ID = 1
+      const AMOUNT = ethers.utils.parseUnits("10", "ether")
 
-    beforeEach(async () => {
-      const transaction = await ethDaddy.connect(owner1).mint(ID, {
-        value: AMOUNT
+      beforeEach(async () => {
+        const transaction = await ethDaddy.connect(owner1).mint(ID, {
+          value: AMOUNT
+        })
+        await transaction.wait()
       })
-      await transaction.wait()
-    })
 
-    it("Updates the owner", async () => {
-      const owner = await ethDaddy.ownerOf(ID)
-      expect(owner).to.equal(owner1.address)
-    })
+      it("Updates the owner", async () => {
+        const owner = await ethDaddy.ownerOf(ID)
+        expect(owner).to.equal(owner1.address)
+      })
 
-    it("Updates list status", async () => {
-      const domain = await ethDaddy.getDomain(ID)
-      expect(domain.isOwned).to.equal(true)
-    })
+      it("Updates list status", async () => {
+        const domain = await ethDaddy.getDomain(ID)
+        expect(domain.isOwned).to.equal(true)
+      })
 
-    it("Updates the contract balance", async () => {
-      const balance = await ethDaddy.getBalance()
-      expect(balance).to.equal(AMOUNT)
+      it("Updates the contract balance", async () => {
+        const balance = await ethDaddy.getBalance()
+        expect(balance).to.equal(AMOUNT)
+      })
     })
   })
 
@@ -117,11 +140,9 @@ describe("ETHDaddy", () => {
       })
     })
     describe("Failure", () => {
-      it("Revert non-user from withdrawing", async () => {
+      it("Reverts non-user from withdrawing", async () => {
         await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
-
       })
     })
   })
-
 })
