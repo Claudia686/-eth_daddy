@@ -82,79 +82,82 @@ describe("ETHDaddy", () => {
       })
 
       describe("Minting", () => {
-        describe("Success", () => {
-          const ID = 1
-          const AMOUNT = ethers.utils.parseUnits("10", "ether")
-
-          beforeEach(async () => {
-            const transaction = await ethDaddy.connect(owner1).mint(ID, {
-              value: AMOUNT
-            })
-            await transaction.wait()
-          })
-
-          it("Updates the owner", async () => {
-            const owner = await ethDaddy.ownerOf(ID)
-            expect(owner).to.equal(owner1.address)
-          })
-
-          it("Updates list status", async () => {
-            const domain = await ethDaddy.getDomain(ID)
-            expect(domain.isOwned).to.equal(true)
-          })
-
-          it("Updates the contract balance", async () => {
-            const balance = await ethDaddy.getBalance()
-            expect(balance).to.equal(AMOUNT)
-          })
-
-          it("Mints tokens with different IDs", async () => {
-            const ID = 2
-            const AMOUNT = ethers.utils.parseUnits("10", "ether");
-
-            let transaction = await ethDaddy.connect(deployer).list("another.eth", tokens(10))
-            await transaction.wait()
-
-            transaction = await ethDaddy.connect(user1).mint(ID, {
-              value: AMOUNT
-            })
-            await transaction.wait()
-
-            const owner2 = await ethDaddy.ownerOf(ID)
-            const domain2 = await ethDaddy.getDomain(ID)
-            const balance2 = await ethDaddy.getBalance()
-
-            expect(owner2).to.equal(user1.address)
-            expect(domain2.isOwned).to.equal(true)
-            expect(balance2).to.equal(AMOUNT.mul(2))
-          })
-
-          it("Lists multiple domains", async () => {
-            await ethDaddy.connect(deployer).list("examples.eth", tokens(5))
-
-            const domain = await ethDaddy.getDomain(2)
-            expect(domain.name).to.equal("examples.eth")
-            expect(domain.cost).to.equal(tokens(5))
-            expect(domain.isOwned).to.equal(false)
-          })
-        })
-
-        describe("Failure", () => {
-          it("Rejects if id is 0", async () => {
+          describe("Success", () => {
+            const ID = 1
             const AMOUNT = ethers.utils.parseUnits("10", "ether")
-            await expect(ethDaddy.connect(buyer).mint(0, {
-              value: AMOUNT
-            })).to.be.reverted
+
+            beforeEach(async () => {
+              const transaction = await ethDaddy.connect(owner1).mint(ID, {
+                value: AMOUNT
+              })
+              await transaction.wait()
+            })
+
+            it("Updates the owner", async () => {
+              const owner = await ethDaddy.ownerOf(ID)
+              expect(owner).to.equal(owner1.address)
+            })
+
+            it("Updates list status", async () => {
+              const domain = await ethDaddy.getDomain(ID)
+              expect(domain.isOwned).to.equal(true)
+            })
+
+            it("Updates the contract balance", async () => {
+              const balance = await ethDaddy.getBalance()
+              expect(balance).to.equal(AMOUNT)
+            })
+
+            it("Mints tokens with different IDs", async () => {
+              const ID = 2
+              const AMOUNT = ethers.utils.parseUnits("10", "ether");
+
+              let transaction = await ethDaddy.connect(deployer).list("another.eth", tokens(10))
+              await transaction.wait()
+
+              transaction = await ethDaddy.connect(user1).mint(ID, {
+                value: AMOUNT
+              })
+              await transaction.wait()
+
+              const owner2 = await ethDaddy.ownerOf(ID)
+              const domain2 = await ethDaddy.getDomain(ID)
+              const balance2 = await ethDaddy.getBalance()
+
+              expect(owner2).to.equal(user1.address)
+              expect(domain2.isOwned).to.equal(true)
+              expect(balance2).to.equal(AMOUNT.mul(2))
+            })
+
+            it("Lists multiple domains", async () => {
+              await ethDaddy.connect(deployer).list("examples.eth", tokens(5))
+
+              const domain = await ethDaddy.getDomain(2)
+              expect(domain.name).to.equal("examples.eth")
+              expect(domain.cost).to.equal(tokens(5))
+              expect(domain.isOwned).to.equal(false)
+            })
           })
 
-          it("Reverts minting with insufficient value", async () => {
-            await expect(ethDaddy.connect(owner1).mint(2, {
-              value: tokens(4)
-            })).to.be.reverted
+          describe("Failure", () => {
+              it("Rejects if id is 0", async () => {
+                const AMOUNT = ethers.utils.parseUnits("10", "ether")
+                await expect(ethDaddy.connect(buyer).mint(0, {
+                  value: AMOUNT
+                })).to.be.reverted
+              })
 
+              it("Reverts minting with insufficient value", async () => {
+                await expect(ethDaddy.connect(owner1).mint(2, {
+                  value: tokens(4)
+                })).to.be.reverted
+              })
+
+              it("Reverts listing domain with existing name", async () => {
+                  await expect(ethDaddy.connect(deployer).list("jack.eth", tokens(8))).to.be.reverted
+                  })
+              })
           })
-        })
-         })
 
         describe("Withdraw", () => {
           describe("Success", () => {

@@ -15,6 +15,7 @@ contract ETHDaddy is ERC721 {
     }
 
     mapping(uint256 => Domain) domains;
+    mapping(string => bool) public _nameExists;
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -29,7 +30,11 @@ contract ETHDaddy is ERC721 {
 
     function list(string memory _name, uint256 _cost) public onlyOwner {
         maxSupply++;
+        require(!_nameExists[_name]);
         domains[maxSupply] = Domain(_name, _cost, false);
+        _nameExists[_name] = true;
+
+       
     }
 
     function mint(uint256 _id) public payable {
