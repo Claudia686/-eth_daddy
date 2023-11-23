@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker, buyer
+  let deployer, owner1, hacker, buyer, user1
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker, buyer] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer, user1] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -106,6 +106,37 @@ describe("ETHDaddy", () => {
       it("Updates the contract balance", async () => {
         const balance = await ethDaddy.getBalance()
         expect(balance).to.equal(AMOUNT)
+      })
+
+      it("Mints tokens with different IDs", async () => {
+        const ID = 2
+        const AMOUNT = ethers.utils.parseUnits("10", "ether");
+
+        let transaction = await ethDaddy.connect(deployer).list("another.eth", tokens(10))
+        await transaction.wait()
+
+        transaction = await ethDaddy.connect(user1).mint(ID, {
+          value: AMOUNT
+        })
+        await transaction.wait()
+
+        const owner2 = await ethDaddy.ownerOf(ID)
+        const domain2 = await ethDaddy.getDomain(ID)
+        const balance2 = await ethDaddy.getBalance()
+
+        expect(owner2).to.equal(user1.address)
+        expect(domain2.isOwned).to.equal(true)
+        expect(balance2).to.equal(AMOUNT.mul(2))
+      })
+    })
+
+    describe("Failure", () => {
+      it("Rejects if id is 0", async () => {
+        const AMOUNT = ethers.utils.parseUnits("10", "ether")
+        await expect(ethDaddy.connect(buyer).mint(0, {
+          value: AMOUNT
+        })).to.be.reverted
+
       })
     })
   })
