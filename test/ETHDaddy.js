@@ -128,6 +128,15 @@ describe("ETHDaddy", () => {
         expect(domain2.isOwned).to.equal(true)
         expect(balance2).to.equal(AMOUNT.mul(2))
       })
+
+      it("Lists multiple domains", async () => {
+        await ethDaddy.connect(deployer).list("examples.eth", tokens(5))
+
+        const domain = await ethDaddy.getDomain(2)
+        expect(domain.name).to.equal("examples.eth")
+        expect(domain.cost).to.equal(tokens(5))
+        expect(domain.isOwned).to.equal(false)
+      })
     })
 
     describe("Failure", () => {
