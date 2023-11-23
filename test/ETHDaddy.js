@@ -81,6 +81,27 @@ describe("ETHDaddy", () => {
     })
   })
 
+  describe("Domain Name", () => {
+    describe("Success", () => {
+      it("Changes domain name", async () => {
+        const ID = 1;
+        const newName = "newName.eth";
+
+        let mintTransaction = await ethDaddy.connect(deployer).mint(ID, {
+          value: tokens(12)
+        });
+        await mintTransaction.wait();
+
+        transaction = await ethDaddy.connect(deployer).changeDomainName(ID, newName);
+        await transaction.wait();
+
+        const updatedDomain = await ethDaddy.domainNames(ID);
+        expect(updatedDomain).to.equal(newName);
+      })
+
+    })
+  })
+
   describe("Minting", () => {
     describe("Success", () => {
       const ID = 1
