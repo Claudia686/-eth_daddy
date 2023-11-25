@@ -17,6 +17,7 @@ contract ETHDaddy is ERC721 {
     mapping(uint256 => Domain) domains;
     mapping(string => bool) public _nameExists;
     mapping(uint256 => string) public domainNames;
+    mapping(uint256 => bool) public domainExists;
 
 
     modifier onlyOwner() {
@@ -52,12 +53,16 @@ contract ETHDaddy is ERC721 {
 
     function changeDomainName(uint256 _id, string memory _newName) public onlyOwner {
         require(_id <= maxSupply);
-        require(domains[_id].isOwned, "Domain with this ID does not exist");
         domainNames[_id] = _newName;
        }
 
     function getDomain(uint256 _id) public view returns (Domain memory) {
             return domains[_id];
+    }
+
+    function updateDomainCost(uint256 _id, uint256 _newCost) public onlyOwner{
+        require(_id <= maxSupply);
+        domains[_id].cost = _newCost;
     }
 
     function getBalance() public view returns (uint256) {
