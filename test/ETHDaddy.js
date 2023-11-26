@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker, buyer, user1
+  let deployer, owner1, hacker, buyer, user1, newOwner
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker, buyer, user1] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer, user1, newOwner] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -59,6 +59,7 @@ describe("ETHDaddy", () => {
         expect(domain.isOwned).to.equal(false)
       })
     })
+    
     describe("Failure", () => {
       it("Reverts non-owner from listing", async () => {
         await expect(ethDaddy.connect(hacker).list("", ethers.utils.parseEther("1"))).to.be.reverted
@@ -187,6 +188,36 @@ describe("ETHDaddy", () => {
     })
   })
 
+  describe("Ownership", () => {
+    describe("Success", () => {
+      it("Transfers ownership", async () => {
+        await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
+        const UpdatedOwner = await ethDaddy.owner()
+        expect(UpdatedOwner).to.equal(newOwner.address)
+      })
+
+      it("Emits OwnershipTransferred event", async () => {
+        transaction = await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
+        expect(transaction).to.emit(ethDaddy, "OwnershipTransferred").withArgs(deployer.address, newOwner.address)
+
+        const UpdatedOwner = await ethDaddy.owner()
+        expect(UpdatedOwner).to.equal(newOwner.address)
+      })
+    })
+
+    describe("Failure", () => {
+      it("Reverts if already owned by the new owner", async () => {
+        await expect(ethDaddy.connect(deployer).transferOwnership(deployer.address)).to.be.reverted
+        const UpdatedOwner = await ethDaddy.owner()
+        expect(UpdatedOwner).to.equal(deployer.address)
+      })
+
+      it("Reverts if called by a non-owner", async () => {
+        await expect(ethDaddy.connect(hacker).transferOwnership(newOwner.address)).to.be.reverted
+      })
+    })
+  })
+
   describe("Domain cost", () => {
     describe("Success", () => {
       it("Updates domain cost", async () => {
@@ -194,7 +225,6 @@ describe("ETHDaddy", () => {
         const newCost = ethers.utils.parseEther("1");
 
         await ethDaddy.connect(deployer).updateDomainCost(domainId, newCost);
-
         const updatedDomain = await ethDaddy.getDomain(domainId);
         expect(updatedDomain.cost).to.equal(newCost)
       })
@@ -209,7 +239,6 @@ describe("ETHDaddy", () => {
         const updatedDomain = await ethDaddy.getDomain(domainID)
         expect(updatedDomain.cost).to.equal(0)
       })
-
     })
   })
 
@@ -242,6 +271,7 @@ describe("ETHDaddy", () => {
         expect(result).to.equal(0)
       })
     })
+
     describe("Failure", () => {
       it("Reverts non-user from withdrawing", async () => {
         await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
