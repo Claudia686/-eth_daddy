@@ -59,7 +59,7 @@ describe("ETHDaddy", () => {
         expect(domain.isOwned).to.equal(false)
       })
     })
-    
+
     describe("Failure", () => {
       it("Reverts non-owner from listing", async () => {
         await expect(ethDaddy.connect(hacker).list("", ethers.utils.parseEther("1"))).to.be.reverted
@@ -190,19 +190,23 @@ describe("ETHDaddy", () => {
 
   describe("Ownership", () => {
     describe("Success", () => {
+
+      beforeEach(async () => {
+        transaction = await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
+      })
+      
       it("Transfers ownership", async () => {
-        await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
         const UpdatedOwner = await ethDaddy.owner()
         expect(UpdatedOwner).to.equal(newOwner.address)
       })
 
       it("Emits OwnershipTransferred event", async () => {
-        transaction = await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
         expect(transaction).to.emit(ethDaddy, "OwnershipTransferred").withArgs(deployer.address, newOwner.address)
 
         const UpdatedOwner = await ethDaddy.owner()
         expect(UpdatedOwner).to.equal(newOwner.address)
       })
+
     })
 
     describe("Failure", () => {
