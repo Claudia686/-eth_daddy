@@ -50,13 +50,24 @@ contract ETHDaddy is ERC721 {
         _safeMint(msg.sender, _id);     
     }
 
+     function getDomain(uint256 _id) public view returns (Domain memory) {
+            return domains[_id];
+    }
+
+   function isDomainOwnerBy(uint256 _id, address _owner) public view returns (bool) {
+    require(_id <= maxSupply);
+    return ownerOf(_id) == _owner;
+
+   }
+   
     function changeDomainName(uint256 _id, string memory _newName) public onlyOwner {
         require(_id <= maxSupply);
         domainNames[_id] = _newName;
        }
 
-    function getDomain(uint256 _id) public view returns (Domain memory) {
-            return domains[_id];
+    function updateDomainCost(uint256 _id, uint256 _newCost) public onlyOwner{
+        require(_id <= maxSupply);
+        domains[_id].cost = _newCost;
     }
 
     function transferOwnership(address _newOwner) public onlyOwner {
@@ -67,11 +78,6 @@ contract ETHDaddy is ERC721 {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     
-    function updateDomainCost(uint256 _id, uint256 _newCost) public onlyOwner{
-        require(_id <= maxSupply);
-        domains[_id].cost = _newCost;
-    }
-
     function getBalance() public view returns (uint256) {
         return address(this).balance;
     }

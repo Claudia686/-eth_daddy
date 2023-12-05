@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker, buyer, user1, newOwner
+  let deployer, owner1, hacker, buyer, user1, newOwner, accounts
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker, buyer, user1, newOwner] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer, user1, newOwner, accounts] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -78,34 +78,6 @@ describe("ETHDaddy", () => {
       it("Reverts listing a domain with dublicate id", async () => {
         const existingDomainId = 1
         await expect(ethDaddy.connect(owner1).list("jack.eth", ethers.utils.parseEther("1"))).to.be.reverted
-      })
-    })
-  })
-
-  describe("Domain Name", () => {
-    describe("Success", () => {
-      it("Changes domain name", async () => {
-        const ID = 1;
-        const newName = "newName.eth";
-
-        let mintTransaction = await ethDaddy.connect(deployer).mint(ID, {
-          value: tokens(12)
-        });
-        await mintTransaction.wait();
-
-        transaction = await ethDaddy.connect(deployer).changeDomainName(ID, newName);
-        await transaction.wait();
-
-        const updatedDomain = await ethDaddy.domainNames(ID);
-        expect(updatedDomain).to.equal(newName);
-      })
-    })
-
-    describe("Failure", () => {
-      it("Reverts if the specified domain ID does not exist", async () => {
-        const ID = 10;
-        const newName = "newName.eth";
-        await expect(ethDaddy.connect(deployer).changeDomainName(ID, newName)).to.be.reverted
       })
     })
   })
@@ -188,13 +160,67 @@ describe("ETHDaddy", () => {
     })
   })
 
+ 
+  describe("Domain Name", () => {
+    describe("Success", () => {
+      it("Changes domain name", async () => {
+        const ID = 1;
+        const newName = "newName.eth";
+
+        let mintTransaction = await ethDaddy.connect(deployer).mint(ID, {
+          value: tokens(12)
+        });
+        await mintTransaction.wait();
+
+        transaction = await ethDaddy.connect(deployer).changeDomainName(ID, newName);
+        await transaction.wait();
+
+        const updatedDomain = await ethDaddy.domainNames(ID);
+        expect(updatedDomain).to.equal(newName);
+      })
+    })
+
+    describe("Failure", () => {
+      it("Reverts if the specified domain ID does not exist", async () => {
+        const ID = 10;
+        const newName = "newName.eth";
+        await expect(ethDaddy.connect(deployer).changeDomainName(ID, newName)).to.be.reverted
+      })
+    })
+  })
+
+
+  describe("Domain cost", () => {
+    describe("Success", () => {
+      it("Updates domain cost", async () => {
+        const domainId = 1;
+        const newCost = ethers.utils.parseEther("1");
+
+        await ethDaddy.connect(deployer).updateDomainCost(domainId, newCost);
+        const updatedDomain = await ethDaddy.getDomain(domainId);
+        expect(updatedDomain.cost).to.equal(newCost)
+      })
+    })
+
+    describe("Failure", () => {
+      it("Fails to update domain cost due to non-owner", async () => {
+        const domainID = 2;
+        const newCost = tokens(16);
+
+        await expect(ethDaddy.connect(hacker).updateDomainCost(domainID, newCost)).to.be.reverted
+        const updatedDomain = await ethDaddy.getDomain(domainID)
+        expect(updatedDomain.cost).to.equal(0)
+      })
+    })
+  })
+
   describe("Ownership", () => {
     describe("Success", () => {
 
       beforeEach(async () => {
         transaction = await ethDaddy.connect(deployer).transferOwnership(newOwner.address)
       })
-      
+
       it("Transfers ownership", async () => {
         const UpdatedOwner = await ethDaddy.owner()
         expect(UpdatedOwner).to.equal(newOwner.address)
@@ -218,30 +244,6 @@ describe("ETHDaddy", () => {
 
       it("Reverts if called by a non-owner", async () => {
         await expect(ethDaddy.connect(hacker).transferOwnership(newOwner.address)).to.be.reverted
-      })
-    })
-  })
-
-  describe("Domain cost", () => {
-    describe("Success", () => {
-      it("Updates domain cost", async () => {
-        const domainId = 1;
-        const newCost = ethers.utils.parseEther("1");
-
-        await ethDaddy.connect(deployer).updateDomainCost(domainId, newCost);
-        const updatedDomain = await ethDaddy.getDomain(domainId);
-        expect(updatedDomain.cost).to.equal(newCost)
-      })
-    })
-
-    describe("Failure", () => {
-      it("Fails to update domain cost due to non-owner", async () => {
-        const domainID = 2;
-        const newCost = tokens(16);
-
-        await expect(ethDaddy.connect(hacker).updateDomainCost(domainID, newCost)).to.be.reverted
-        const updatedDomain = await ethDaddy.getDomain(domainID)
-        expect(updatedDomain.cost).to.equal(0)
       })
     })
   })
@@ -286,4 +288,4 @@ describe("ETHDaddy", () => {
       })
     })
   })
-})
+  })
