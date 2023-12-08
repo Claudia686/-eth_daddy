@@ -54,10 +54,9 @@ contract ETHDaddy is ERC721 {
             return domains[_id];
     }
 
-   function isDomainOwnerBy(uint256 _id, address _owner) public view returns (bool) {
-    require(_id <= maxSupply);
+   function isDomainOwnedBy(uint256 _id, address _owner) public view returns (bool) {
+    require(_id <= maxSupply,  "Invalid domain ID");
     return ownerOf(_id) == _owner;
-
    }
    
     function changeDomainName(uint256 _id, string memory _newName) public onlyOwner {
