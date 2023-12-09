@@ -204,9 +204,26 @@ describe("ETHDaddy", () => {
         expect(isOwned).to.be.true
       })
 
-      it("Returns false if the domain is not owned by the specified address", async () => {
+      it("Returns true if the domain is not owned by the specified address", async () => {
         const isOwned = await ethDaddy.isDomainOwnedBy(1, address2.address)
         expect(isOwned).to.be.false
+      })
+    })
+
+    describe("Failure", () => {
+      it("Reverts if the domain ID exceeds maxsupply", async () => {
+        const maxSupply = 100;
+        await expect(ethDaddy.isDomainOwnedBy(maxSupply, address1.address)).to.be.reverted
+      })
+
+      it("Reverts when checking ownership of non-minted domain", async () => {
+        const nonExistentDomainId = 100;
+        await expect(ethDaddy.isDomainOwnedBy(nonExistentDomainId, address1.address)).to.be.reverted
+      })
+
+      it("Reverts with invalid domain ID", async () => {
+        const invalidDomainId =  0;
+        await expect(ethDaddy.isDomainOwnedBy(invalidDomainId, address1.address)).to.be.reverted
       })
     })
   })
