@@ -69,6 +69,11 @@ contract ETHDaddy is ERC721 {
         domains[_id].cost = _newCost;
     }
 
+    function transferDomain(uint256 _tokenid, address _to) public {
+        require(ownerOf(_tokenid) == msg.sender, "Not the domain owner");
+        _safeMint(_to, _tokenid);
+    }
+
     function transferOwnership(address _newOwner) public onlyOwner {
         require(_newOwner != owner, "New owner must be different from the current owner");
         emit OwnershipTransferred(owner, _newOwner);
