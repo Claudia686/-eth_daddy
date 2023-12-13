@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner
+  let deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner, anotherNewOwner, yetAnotherNewOwner, tokenId1, tokenId2, tokenId3
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner, anotherNewOwner, yetAnotherNewOwner, tokenId1, tokenId2, tokenId3] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -285,46 +285,68 @@ describe("ETHDaddy", () => {
       })
     })
   })
-  
-   describe("Withdraw", () => {
-          describe("Success", () => {
-            const ID = 1
-            const AMOUNT = ethers.utils.parseUnits("10", "ether")
-            let balanceBefore
 
-            beforeEach(async () => {
-              //get balancebefore
-              balanceBefore = await ethers.provider.getBalance(deployer.address)
+  describe("Transfer Domain", () => {
+    describe("Success", () => {
+      const tokenId = 1;
 
-              let transaction = await ethDaddy.connect(owner1).mint(ID, {
-                value: AMOUNT
-              })
-              await transaction.wait()
+      it("Should transfer the domain to another address", async () => {
+        let transaction = await ethDaddy.connect(owner).mint(tokenId, {
+          value: tokens(12)
+        });
+        await transaction.wait();
 
-              transaction = await ethDaddy.connect(deployer).withdraw()
-              await transaction.wait()
-            })
+        const initialOwner = await ethDaddy.ownerOf(tokenId)
+        expect(initialOwner).to.equal(owner.address);
 
-            it("Updates the owner balance", async () => {
-              const balanceAfter = await ethers.provider.getBalance(deployer.address)
-              expect(balanceAfter).to.be.greaterThan(balanceBefore)
-            })
+        const transferTransaction = await ethDaddy.connect(owner).transferDomain(tokenId, newOwner.address);
+        await transferTransaction.wait();
 
-            it("Updates contract balance", async () => {
-              const result = await ethDaddy.getBalance()
-              expect(result).to.equal(0)
-            })
-          })
-
-          describe("Failure", () => {
-            it("Reverts non-user from withdrawing", async () => {
-              await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
-            })
-
-            it("Reverts withdraw without balance", async () => {
-              await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
-            })
-          })
-
-        })
+        const newOwnerAfterTransfer = await ethDaddy.ownerOf(tokenId);
+        expect(newOwnerAfterTransfer).to.equal(newOwner.address);
       })
+    })
+  })
+
+  describe("Withdraw", () => {
+    describe("Success", () => {
+      const ID = 1
+      const AMOUNT = ethers.utils.parseUnits("10", "ether")
+      let balanceBefore
+
+      beforeEach(async () => {
+        //get balancebefore
+        balanceBefore = await ethers.provider.getBalance(deployer.address)
+
+        let transaction = await ethDaddy.connect(owner1).mint(ID, {
+          value: AMOUNT
+        })
+        await transaction.wait()
+
+        transaction = await ethDaddy.connect(deployer).withdraw()
+        await transaction.wait()
+      })
+
+      it("Updates the owner balance", async () => {
+        const balanceAfter = await ethers.provider.getBalance(deployer.address)
+        expect(balanceAfter).to.be.greaterThan(balanceBefore)
+      })
+
+      it("Updates contract balance", async () => {
+        const result = await ethDaddy.getBalance()
+        expect(result).to.equal(0)
+      })
+    })
+
+    describe("Failure", () => {
+      it("Reverts non-user from withdrawing", async () => {
+        await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
+      })
+
+      it("Reverts withdraw without balance", async () => {
+        await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
+      })
+    })
+
+  })
+})
