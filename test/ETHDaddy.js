@@ -8,13 +8,13 @@ const tokens = (n) => {
 
 describe("ETHDaddy", () => {
   let ethDaddy
-  let deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner, anotherNewOwner, yetAnotherNewOwner, tokenId1, tokenId2, tokenId3
+  let deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner
 
   const NAME = "ETH Daddy";
   const SYMBOL = "ETHD";
 
   beforeEach(async () => {
-    [deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner, anotherNewOwner, yetAnotherNewOwner, tokenId1, tokenId2, tokenId3] = await ethers.getSigners();
+    [deployer, owner1, hacker, buyer, user1, newOwner, accounts, address1, address2, owner] = await ethers.getSigners();
 
     const ETHDaddy = await ethers.getContractFactory("ETHDaddy")
     ethDaddy = await ETHDaddy.deploy("ETH Daddy", "ETHD")
@@ -304,6 +304,35 @@ describe("ETHDaddy", () => {
 
         const newOwnerAfterTransfer = await ethDaddy.ownerOf(tokenId);
         expect(newOwnerAfterTransfer).to.equal(newOwner.address);
+      })
+    })
+
+    describe("Failure", () => {
+      it("Rejects transfering the domain without ownership ", async () => {
+        const tokenId = 1;
+        const initialOwner = owner.address;
+        const newOwnerAddress = newOwner.address;
+        
+        transaction = await ethDaddy.connect(owner).mint(tokenId, {
+          value: tokens(14)
+        })
+        await transaction.wait()
+
+        expect(await ethDaddy.ownerOf(tokenId)).to.equal(initialOwner)
+        await expect(ethDaddy.connect(newOwner).transferDomain(tokenId, newOwner.address)).to.be.reverted
+      })
+
+      it("Rejects transfering the domain to the same owner ", async () => {
+        const tokenId = 1;
+        const initialOwner = owner.address;
+
+        const transaction = await ethDaddy.connect(owner).mint(tokenId, {
+          value: tokens(12)
+        })
+        await transaction.wait()
+
+        expect(await ethDaddy.ownerOf(tokenId)).to.equal(initialOwner)
+        await expect(ethDaddy.connect(newOwner).transferDomain(tokenId, initialOwner)).to.be.reverted
       })
     })
   })
