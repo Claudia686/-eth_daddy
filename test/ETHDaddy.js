@@ -168,7 +168,7 @@ describe("ETHDaddy", () => {
 
         let mintTransaction = await ethDaddy.connect(deployer).mint(ID, {
           value: tokens(12)
-        });
+        })
         await mintTransaction.wait();
 
         transaction = await ethDaddy.connect(deployer).changeDomainName(ID, newName);
@@ -265,7 +265,7 @@ describe("ETHDaddy", () => {
         expect(UpdatedOwner).to.equal(newOwner.address)
       })
 
-      it("Emits OwnershipTransferred event", async () => {
+      it("Emits ownership transferred event", async () => {
         expect(transaction).to.emit(ethDaddy, "OwnershipTransferred").withArgs(deployer.address, newOwner.address)
 
         const UpdatedOwner = await ethDaddy.owner()
@@ -293,7 +293,7 @@ describe("ETHDaddy", () => {
       it("Should transfer the domain to another address", async () => {
         let transaction = await ethDaddy.connect(owner).mint(tokenId, {
           value: tokens(12)
-        });
+        })
         await transaction.wait();
 
         const initialOwner = await ethDaddy.ownerOf(tokenId)
@@ -305,6 +305,23 @@ describe("ETHDaddy", () => {
         const newOwnerAfterTransfer = await ethDaddy.ownerOf(tokenId);
         expect(newOwnerAfterTransfer).to.equal(newOwner.address);
       })
+
+      it("Should allow transfer by the same owner", async () => {
+        const tokenId = 1;
+        let mintTransaction = await ethDaddy.connect(owner).mint(tokenId, {
+          value: tokens(13)
+        })
+          await mintTransaction.wait();
+
+        let curentOwner = await ethDaddy.ownerOf(tokenId)
+        expect(curentOwner).to.equal(owner.address)
+
+        let transferTransaction = await ethDaddy.connect(owner).transferDomain(tokenId, owner.address)
+        await transferTransaction.wait()
+
+        curentOwner = await ethDaddy.ownerOf(tokenId)
+        expect(curentOwner).to.equal(owner.address)
+      })
     })
 
     describe("Failure", () => {
@@ -312,7 +329,7 @@ describe("ETHDaddy", () => {
         const tokenId = 1;
         const initialOwner = owner.address;
         const newOwnerAddress = newOwner.address;
-        
+
         transaction = await ethDaddy.connect(owner).mint(tokenId, {
           value: tokens(14)
         })
@@ -344,7 +361,6 @@ describe("ETHDaddy", () => {
       let balanceBefore
 
       beforeEach(async () => {
-        //get balancebefore
         balanceBefore = await ethers.provider.getBalance(deployer.address)
 
         let transaction = await ethDaddy.connect(owner1).mint(ID, {
@@ -376,6 +392,5 @@ describe("ETHDaddy", () => {
         await expect(ethDaddy.connect(hacker).withdraw()).to.be.reverted
       })
     })
-
   })
 })
